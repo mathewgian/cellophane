@@ -38,7 +38,6 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
       }
 
       .banner-row {
@@ -59,6 +58,9 @@
       .banner-row.green {
         background: linear-gradient(90deg, #2e9a58, #3eaf62);
         color: #ffffff;
+        width: calc(100% - 20px);
+        margin: 0 auto;
+        border-radius: 10px;
       }
 
       .banner-title {
@@ -118,8 +120,6 @@
       .section {
         margin-top: 0;
         background: #f3f3f3;
-        border-top: 1px solid rgba(0,0,0,0.08);
-        border-bottom: 1px solid rgba(0,0,0,0.08);
       }
 
       .section-header {
@@ -130,6 +130,9 @@
         line-height: 1.1;
         font-weight: 700;
         letter-spacing: 0.02em;
+        width: calc(100% - 20px);
+        margin: 0 auto;
+        border-radius: 10px;
       }
 
       .entry-list {
