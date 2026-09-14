@@ -60,17 +60,18 @@ function createDonutChart(categories: Category[], radius = 118, innerRadius = 54
   const total = Math.max(sumValues(categories), 1);
 
   if (positiveCategories.length === 1) {
-    const circumference = 2 * Math.PI * radius;
     const strokeWidth = radius - innerRadius;
+    const strokeRadius = innerRadius + strokeWidth / 2;
+    const circumference = 2 * Math.PI * strokeRadius;
     const color = positiveCategories[0].color;
 
     return `
       <svg viewBox="0 0 280 280" aria-label="Budget donut chart" role="img">
-        <circle cx="140" cy="140" r="${radius}" fill="none" stroke="#f4f4f4" stroke-width="${strokeWidth}" />
+        <circle cx="140" cy="140" r="${strokeRadius}" fill="none" stroke="#f4f4f4" stroke-width="${strokeWidth}" />
         <circle
           cx="140"
           cy="140"
-          r="${radius}"
+          r="${strokeRadius}"
           fill="none"
           stroke="${color}"
           stroke-width="${strokeWidth}"
@@ -229,7 +230,12 @@ function renderApp(): void {
 
   const fields = app.querySelectorAll<HTMLInputElement>('input[type="number"]');
   fields.forEach((field) => {
-    field.addEventListener('input', () => {
+    field.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') {
+        return;
+      }
+
+      event.preventDefault();
       const section = field.dataset.section;
       const index = Number(field.dataset.index ?? 0);
 

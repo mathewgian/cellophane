@@ -12,5 +12,5 @@
     "outDir": "dist",
     "sourceMap": false
   },
-  "include": ["bubblewrap.ts"]
+  "include": ["cellophane.ts"]
 }
