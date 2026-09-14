@@ -1,0 +1,12 @@
+{
+  "name": "budget-summary-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "check": "tsc --project tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

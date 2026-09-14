@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Budget Summary</title>
+    <style>
+      :root {
+        --bg: #1f1f1f;
+        --panel: #f4f4f4;
+        --header-green: #3d9f5b;
+        --header-dark: #2a2a2a;
+        --text: #1f1f1f;
+        --muted: #dfe8ec;
+        --soft: #ebebeb;
+        --outline: #6dbb82;
+        --shadow: rgba(0, 0, 0, 0.18);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 620px;
+        margin: 0 auto;
+        background: #efefef;
+        padding-bottom: 12px;
+      }
+
+      .banner {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
+      }
+
+      .banner-row {
+        width: 100%;
+        padding: 10px 16px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .banner-row.white {
+        background: #ffffff;
+        color: #000000;
+      }
+
+      .banner-row.green {
+        background: linear-gradient(90deg, #2e9a58, #3eaf62);
+        color: #ffffff;
+      }
+
+      .banner-title {
+        font-size: 30px;
+        line-height: 1.1;
+      }
+
+      .banner-subtitle {
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1.4fr;
+        align-items: center;
+        gap: 18px;
+        padding: 18px 14px 10px;
+        background: #f0f0f0;
+      }
+
+      .donut-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .summary-values {
+        display: grid;
+        gap: 12px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        color: #2f2f2f;
+        font-weight: 700;
+      }
+
+      .summary-row .label {
+        font-size: 17px;
+        font-weight: 700;
+        color: #2c2c2c;
+      }
+
+      .summary-row .value {
+        font-size: 16px;
+        color: #1d1d1d;
+        text-align: right;
+        min-width: 140px;
+      }
+
+      .section {
+        margin-top: 0;
+        background: #f3f3f3;
+        border-top: 1px solid rgba(0,0,0,0.08);
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+
+      .section-header {
+        background: var(--header-green);
+        color: white;
+        padding: 12px 16px;
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .entry-list {
+        padding: 0 0 12px;
+      }
+
+      .entry-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px 8px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a1a;
+      }
+
+      .entry-row:nth-child(odd) {
+        background: rgba(255,255,255,0.12);
+      }
+
+      .entry-row .amount {
+        min-width: 120px;
+        text-align: right;
+        color: #1a1a1a;
+      }
+
+      .entry-row .amount.negative {
+        color: #b33a34;
+      }
+
+      .input-row {
+        display: grid;
+        grid-template-columns: 1fr 120px;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .input-row input {
+        width: 100%;
+        border: 1px solid rgba(0,0,0,0.14);
+        background: #fff;
+        color: #1a1a1a;
+        font: inherit;
+        font-weight: 700;
+        font-size: 15px;
+        text-align: right;
+        padding: 6px 8px;
+      }
+
+      svg {
+        width: 260px;
+        height: 260px;
+        overflow: visible;
+      }
+
+      @media (max-width: 560px) {
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app" id="app"></div>
+    <script src="./dist/bubblewrap.js"></script>
+  </body>
+</html>
