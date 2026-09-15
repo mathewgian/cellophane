@@ -17,6 +17,11 @@ type BudgetState = {
   savings: Category[];
 };
 
+type Spreadsheet = {
+  name: string;
+  state: BudgetState;
+};
+
 const initialExpenses: Category[] = [
   { name: 'Restaurants', value: 0, color: '#d94a4a' },
   { name: 'Groceries', value: 0, color: '#4aa8d8' },
@@ -38,11 +43,18 @@ const initialSavings: Category[] = [
   { name: 'RRSP', value: 0, color: '#f09a22' }
 ];
 
-const initialState: BudgetState = {
-  income: 0,
-  expenses: initialExpenses.map((category) => ({ ...category })),
-  savings: initialSavings.map((category) => ({ ...category }))
-};
+function createInitialState(): BudgetState {
+  return {
+    income: 0,
+    expenses: initialExpenses.map((category) => ({ ...category })),
+    savings: initialSavings.map((category) => ({ ...category }))
+  };
+}
+
+const spreadsheets: Spreadsheet[] = [
+  { name: 'Budget 1', state: createInitialState() }
+];
+let activeSpreadsheetIndex = 0;
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', {
@@ -198,17 +210,40 @@ function renderEditableSection(title: string, categories: Category[]): string {
   `;
 }
 
+function renderBottomToolbar(): string {
+  return `
+    <div class="bottom-toolbar" role="toolbar" aria-label="Budget spreadsheets">
+      <button class="add-sheet-button" type="button" aria-label="Add spreadsheet">+</button>
+      <div class="sheet-tabs" role="tablist" aria-label="Spreadsheets">
+        ${spreadsheets
+          .map(
+            (spreadsheet, index) => `
+              <button
+                class="sheet-tab${index === activeSpreadsheetIndex ? ' active' : ''}"
+                type="button"
+                role="tab"
+                aria-selected="${index === activeSpreadsheetIndex}"
+                data-sheet-index="${index}"
+              >${spreadsheet.name}</button>
+            `
+          )
+          .join('')}
+      </div>
+    </div>
+  `;
+}
+
 function renderApp(): void {
   const app = document.getElementById('app');
   if (!app) {
     return;
   }
 
-  const summary = getSummary(initialState);
+  const activeState = spreadsheets[activeSpreadsheetIndex].state;
   const incomeInput = [
     {
       name: 'Monthly Income',
-      value: initialState.income,
+      value: activeState.income,
       color: '#4d7ef7'
     }
   ];
@@ -222,11 +257,29 @@ function renderApp(): void {
         <div class="banner-subtitle">Summary</div>
       </div>
     </div>
-    ${renderSummary(initialState)}
+    ${renderSummary(activeState)}
     ${renderEditableSection('Monthly Income', incomeInput)}
-    ${renderEditableSection('Monthly Expenses', initialState.expenses)}
-    ${renderEditableSection('Monthly Savings', initialState.savings)}
+    ${renderEditableSection('Monthly Expenses', activeState.expenses)}
+    ${renderEditableSection('Monthly Savings', activeState.savings)}
+    ${renderBottomToolbar()}
   `;
+
+  const addSheetButton = app.querySelector<HTMLButtonElement>('.add-sheet-button');
+  addSheetButton?.addEventListener('click', () => {
+    spreadsheets.push({
+      name: `Budget ${spreadsheets.length + 1}`,
+      state: createInitialState()
+    });
+    activeSpreadsheetIndex = spreadsheets.length - 1;
+    renderApp();
+  });
+
+  app.querySelectorAll<HTMLButtonElement>('.sheet-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      activeSpreadsheetIndex = Number(tab.dataset.sheetIndex ?? 0);
+      renderApp();
+    });
+  });
 
   const fields = app.querySelectorAll<HTMLInputElement>('input[type="number"]');
   fields.forEach((field) => {
@@ -239,12 +292,14 @@ function renderApp(): void {
       const section = field.dataset.section;
       const index = Number(field.dataset.index ?? 0);
 
+      const activeState = spreadsheets[activeSpreadsheetIndex].state;
+
       if (section === 'income') {
-        initialState.income = Number(field.value) || 0;
+        activeState.income = Number(field.value) || 0;
       } else if (section === 'expenses') {
-        initialState.expenses[index].value = Number(field.value) || 0;
+        activeState.expenses[index].value = Number(field.value) || 0;
       } else if (section === 'savings') {
-        initialState.savings[index].value = Number(field.value) || 0;
+        activeState.savings[index].value = Number(field.value) || 0;
       }
 
       renderApp();

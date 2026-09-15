@@ -31,7 +31,7 @@
         max-width: 620px;
         margin: 0 auto;
         background: #efefef;
-        padding-bottom: 12px;
+        padding-bottom: 76px;
       }
 
       .banner {
@@ -186,6 +186,76 @@
         font-size: 15px;
         text-align: right;
         padding: 6px 8px;
+      }
+
+      .bottom-toolbar {
+        position: fixed;
+        z-index: 10;
+        right: 0;
+        bottom: 0;
+        left: 50%;
+        display: flex;
+        align-items: stretch;
+        width: min(620px, 100%);
+        min-height: 58px;
+        overflow: hidden;
+        transform: translateX(-50%);
+        background: #2a2a2a;
+        box-shadow: 0 -4px 14px var(--shadow);
+      }
+
+      .add-sheet-button,
+      .sheet-tab {
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .add-sheet-button {
+        display: grid;
+        flex: 0 0 58px;
+        place-items: center;
+        padding: 0;
+        background: #3d9f5b;
+        color: #ffffff;
+        font-size: 32px;
+        line-height: 1;
+      }
+
+      .add-sheet-button:hover,
+      .add-sheet-button:focus-visible {
+        background: #49b36a;
+      }
+
+      .sheet-tabs {
+        display: flex;
+        gap: 6px;
+        min-width: 0;
+        padding: 8px 10px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+
+      .sheet-tab {
+        flex: 0 0 auto;
+        min-width: 100px;
+        padding: 0 16px;
+        border-radius: 6px;
+        background: #454545;
+        color: #dfe8ec;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .sheet-tab.active {
+        background: #ffffff;
+        color: #1f1f1f;
+      }
+
+      .sheet-tab:hover,
+      .sheet-tab:focus-visible {
+        outline: 2px solid #6dbb82;
+        outline-offset: -2px;
       }
 
       svg {
