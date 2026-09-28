@@ -15,7 +15,10 @@ type BudgetState = {
   income: number;
   expenses: Category[];
   savings: Category[];
+  transactions: Transaction[];
 };
+
+type Transaction = { name: string; category: string; amount: number };
 
 type Spreadsheet = {
   name: string;
@@ -47,13 +50,16 @@ function createInitialState(): BudgetState {
   return {
     income: 0,
     expenses: initialExpenses.map((category) => ({ ...category })),
-    savings: initialSavings.map((category) => ({ ...category }))
+    savings: initialSavings.map((category) => ({ ...category })),
+    transactions: []
   };
 }
 
-const spreadsheets: Spreadsheet[] = [
-  { name: 'Budget 1', state: createInitialState() }
+const months = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
+const spreadsheets: Spreadsheet[] = months.map((name) => ({ name, state: createInitialState() }));
 let activeSpreadsheetIndex = 0;
 
 function formatCurrency(value: number): string {
@@ -184,28 +190,56 @@ function renderSummary(state: BudgetState): string {
   `;
 }
 
-function renderEditableSection(title: string, categories: Category[]): string {
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character] ?? character);
+}
+
+function renderCategorySection(title: string, categories: Category[], transactions: Transaction[]): string {
   return `
     <div class="section">
       <div class="section-header">${title}</div>
       <div class="entry-list">
-        ${categories
-          .map(
-            (category, index) => `
-              <label class="entry-row input-row">
+        ${categories.map((category) => {
+          const entries = transactions.filter((transaction) => transaction.category === category.name);
+          return `
+            <details class="category-accordion">
+              <summary class="entry-row category-summary">
                 <span>${category.name}</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  data-section="${title === 'Monthly Income' ? 'income' : title === 'Monthly Expenses' ? 'expenses' : 'savings'}"
-                  data-index="${index}"
-                  value="${category.value}"
-                />
-              </label>
-            `
-          )
-          .join('')}
+                <span class="amount">${formatCurrency(category.value)}</span>
+              </summary>
+              <div class="transaction-list">
+                ${entries.length ? entries.map((transaction) => `
+                  <div class="transaction-row">
+                    <span>${escapeHtml(transaction.name)}</span>
+                    <span class="amount">${formatCurrency(transaction.amount)}</span>
+                  </div>
+                `).join('') : '<div class="empty-transactions">No transactions yet</div>'}
+              </div>
+            </details>
+          `;
+        }).join('')}
       </div>
+    </div>
+  `;
+}
+
+function renderTransactionPage(): string {
+  const state = spreadsheets[activeSpreadsheetIndex].state;
+  const categories = ['Monthly Income', ...state.expenses.map(({ name }) => name), ...state.savings.map(({ name }) => name)];
+  return `
+    <div class="transaction-page">
+      <div class="transaction-page-heading">
+        <button class="back-button" type="button" aria-label="Back to spreadsheet"></button>
+        <h1>Add Transaction</h1>
+      </div>
+      <form id="transaction-form" class="transaction-form">
+        <label>Transaction name<input name="name" type="text" required maxlength="100" autocomplete="off" /></label>
+        <label>Category<select name="category" required>${categories.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('')}</select></label>
+        <label>Amount<input name="amount" type="number" step="0.01" min="0.01" required inputmode="decimal" /></label>
+        <button class="save-transaction-button" type="submit">Add Transaction</button>
+      </form>
     </div>
   `;
 }
@@ -213,7 +247,6 @@ function renderEditableSection(title: string, categories: Category[]): string {
 function renderBottomToolbar(): string {
   return `
     <div class="bottom-toolbar" role="toolbar" aria-label="Budget spreadsheets">
-      <button class="add-sheet-button" type="button" aria-label="Add spreadsheet">+</button>
       <div class="sheet-tabs" role="tablist" aria-label="Spreadsheets">
         ${spreadsheets
           .map(
@@ -240,68 +273,72 @@ function renderApp(): void {
   }
 
   const activeState = spreadsheets[activeSpreadsheetIndex].state;
-  const incomeInput = [
-    {
-      name: 'Monthly Income',
-      value: activeState.income,
-      color: '#4d7ef7'
-    }
-  ];
-
   app.innerHTML = `
-    <div class="banner">
-      <div class="banner-row white">
-        <div class="banner-title">Budget</div>
+    <div class="spreadsheet-content">
+      <div class="banner">
+        <div class="banner-row white">
+          <div class="banner-title">Budget</div>
+        </div>
+        <div class="banner-row green">
+          <div class="banner-subtitle">Summary</div>
+        </div>
       </div>
-      <div class="banner-row green">
-        <div class="banner-subtitle">Summary</div>
-      </div>
+      ${renderSummary(activeState)}
+      ${renderCategorySection('Monthly Income', [{ name: 'Monthly Income', value: activeState.income, color: '#4d7ef7' }], activeState.transactions)}
+      ${renderCategorySection('Monthly Expenses', activeState.expenses, activeState.transactions)}
+      ${renderCategorySection('Monthly Savings', activeState.savings, activeState.transactions)}
     </div>
-    ${renderSummary(activeState)}
-    ${renderEditableSection('Monthly Income', incomeInput)}
-    ${renderEditableSection('Monthly Expenses', activeState.expenses)}
-    ${renderEditableSection('Monthly Savings', activeState.savings)}
+    ${showTransactionPage ? '' : '<button class="add-transaction-button" type="button" aria-label="Add transaction">+</button>'}
     ${renderBottomToolbar()}
   `;
 
-  const addSheetButton = app.querySelector<HTMLButtonElement>('.add-sheet-button');
-  addSheetButton?.addEventListener('click', () => {
-    spreadsheets.push({
-      name: `Budget ${spreadsheets.length + 1}`,
-      state: createInitialState()
+  app.classList.toggle('transaction-open', showTransactionPage);
+  if (showTransactionPage) {
+    app.insertAdjacentHTML('beforeend', '<button class="transaction-backdrop" type="button" aria-label="Close add transaction"></button>');
+    app.insertAdjacentHTML('beforeend', renderTransactionPage());
+    app.querySelector<HTMLButtonElement>('.transaction-backdrop')?.addEventListener('click', () => {
+      showTransactionPage = false;
+      renderApp();
     });
-    activeSpreadsheetIndex = spreadsheets.length - 1;
+    app.querySelector<HTMLButtonElement>('.back-button')?.addEventListener('click', () => {
+      showTransactionPage = false;
+      renderApp();
+    });
+    app.querySelector<HTMLFormElement>('#transaction-form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget as HTMLFormElement;
+      const data = new FormData(form);
+      const amount = Number(data.get('amount'));
+      if (!Number.isFinite(amount) || amount <= 0) return;
+      const name = String(data.get('name') ?? '').trim();
+      const category = String(data.get('category') ?? '');
+      if (!name || !category) return;
+      activeState.transactions.push({ name, category, amount });
+      if (category === 'Monthly Income') activeState.income += amount;
+      else {
+        const target = [...activeState.expenses, ...activeState.savings].find((item) => item.name === category);
+        if (target) target.value += amount;
+      }
+      showTransactionPage = false;
+      renderApp();
+    });
+    bindSheetTabs(app);
+    return;
+  }
+
+  app.querySelector<HTMLButtonElement>('.add-transaction-button')?.addEventListener('click', () => {
+    showTransactionPage = true;
     renderApp();
   });
+  bindSheetTabs(app);
+}
 
+let showTransactionPage = false;
+
+function bindSheetTabs(app: HTMLElement): void {
   app.querySelectorAll<HTMLButtonElement>('.sheet-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       activeSpreadsheetIndex = Number(tab.dataset.sheetIndex ?? 0);
-      renderApp();
-    });
-  });
-
-  const fields = app.querySelectorAll<HTMLInputElement>('input[type="number"]');
-  fields.forEach((field) => {
-    field.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter') {
-        return;
-      }
-
-      event.preventDefault();
-      const section = field.dataset.section;
-      const index = Number(field.dataset.index ?? 0);
-
-      const activeState = spreadsheets[activeSpreadsheetIndex].state;
-
-      if (section === 'income') {
-        activeState.income = Number(field.value) || 0;
-      } else if (section === 'expenses') {
-        activeState.expenses[index].value = Number(field.value) || 0;
-      } else if (section === 'savings') {
-        activeState.savings[index].value = Number(field.value) || 0;
-      }
-
       renderApp();
     });
   });
