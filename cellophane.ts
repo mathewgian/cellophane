@@ -61,6 +61,19 @@ const months = [
 ];
 const spreadsheets: Spreadsheet[] = months.map((name) => ({ name, state: createInitialState() }));
 let activeSpreadsheetIndex = 0;
+let showGuidelineOverlay = false;
+
+const budgetingGuidelines = [
+  { name: 'Housing', percentage: 35, color: '#e45757' },
+  { name: 'Transportation', percentage: 15, color: '#ed9b40' },
+  { name: 'Food', percentage: 20, color: '#e6cb45' },
+  { name: 'Debt payments', percentage: 15, color: '#65b86b' },
+  { name: 'Personal spending', percentage: 4, color: '#45b8a7' },
+  { name: 'Savings', percentage: 5, color: '#4b83d1' },
+  { name: 'Utilities', percentage: 5, color: '#8659ba' },
+  { name: 'Clothing', percentage: 3, color: '#c15c9e' },
+  { name: 'Medical', percentage: 3, color: '#777777' }
+];
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-CA', {
@@ -140,6 +153,25 @@ function createDonutChart(categories: Category[], radius = 118, innerRadius = 54
   `;
 }
 
+function createGuidelinePie(): string {
+  const total = budgetingGuidelines.reduce((sum, item) => sum + item.percentage, 0);
+  let cumulative = 0;
+  const slices = budgetingGuidelines.map((item) => {
+    const start = (cumulative / total) * Math.PI * 2 - Math.PI / 2;
+    cumulative += item.percentage;
+    const end = (cumulative / total) * Math.PI * 2 - Math.PI / 2;
+    const overlayRadius = 54;
+    const x1 = 140 + overlayRadius * Math.cos(start);
+    const y1 = 140 + overlayRadius * Math.sin(start);
+    const x2 = 140 + overlayRadius * Math.cos(end);
+    const y2 = 140 + overlayRadius * Math.sin(end);
+    const largeArc = end - start > Math.PI ? 1 : 0;
+    const label = `${item.name}: ${item.percentage}%`;
+    return `<path d="M 140 140 L ${x1} ${y1} A ${overlayRadius} ${overlayRadius} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${item.color}" aria-label="${label}" tabindex="0"><title>${label}</title></path>`;
+  });
+  return `<svg class="guideline-pie${showGuidelineOverlay ? '' : ' hidden'}" viewBox="0 0 280 280" aria-label="Credit Counselling Society recommended budget guidelines" role="img">${slices.join('')}</svg>`;
+}
+
 function getSummary(state: BudgetState): Summary {
   const totalExpenses = sumValues(state.expenses);
   const totalSavings = sumValues(state.savings);
@@ -173,8 +205,10 @@ function renderSummary(state: BudgetState): string {
     <div class="summary-grid">
       <div class="donut-wrap">
         ${createDonutChart(chartCategories)}
+        ${createGuidelinePie()}
       </div>
       <div class="summary-values">
+        <label class="guidelines-toggle"><input class="guidelines-checkbox" type="checkbox"${showGuidelineOverlay ? ' checked' : ''} /> Credit Counselling Society</label>
         ${rows
           .map(
             (row) => `
@@ -329,6 +363,10 @@ function renderApp(): void {
   app.querySelector<HTMLButtonElement>('.add-transaction-button')?.addEventListener('click', () => {
     showTransactionPage = true;
     renderApp();
+  });
+  app.querySelector<HTMLInputElement>('.guidelines-checkbox')?.addEventListener('change', (event) => {
+    showGuidelineOverlay = (event.currentTarget as HTMLInputElement).checked;
+    app.querySelector<SVGSVGElement>('.guideline-pie')?.classList.toggle('hidden', !showGuidelineOverlay);
   });
   bindSheetTabs(app);
 }
